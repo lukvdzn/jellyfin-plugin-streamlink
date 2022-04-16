@@ -65,8 +65,9 @@ namespace MediaBrowser.Providers.Plugin.Streamlink
         /// <returns>Task&lt;IEnumerable&lt;MediaSourceInfo&gt;&gt;.</returns>
         public Task<IEnumerable<MediaSourceInfo>> GetMediaSources(BaseItem item, CancellationToken cancellationToken)
         {
-            var ctask = (new MediaBrowser.Channels.Streamlink.Channel()).GetChannelItems(null, cancellationToken);
+            var ctask = new Channels.Streamlink.Channel().GetChannelItems(null, cancellationToken);
             ctask.Wait();
+            
             var channelInfos = ctask.Result.Items;
             foreach (var channel in channelInfos)
             {
@@ -91,11 +92,16 @@ namespace MediaBrowser.Providers.Plugin.Streamlink
             _logger.LogDebug("Current Streams: {0}", currentLiveStreams);
 
             foreach (var curstream in currentLiveStreams)
+            {
                 if (curstream.OriginalStreamId == openToken)
+                {
                     return Task.FromResult(curstream);
+                }
+            }
 
-            var ctask = (new MediaBrowser.Channels.Streamlink.Channel()).GetChannelItems(null, cancellationToken);
+            var ctask = new Channels.Streamlink.Channel().GetChannelItems(null, cancellationToken);
             ctask.Wait();
+
             var channelInfos = ctask.Result.Items;
             foreach (var channel in channelInfos)
             {

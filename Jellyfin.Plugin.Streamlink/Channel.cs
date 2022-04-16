@@ -1,22 +1,15 @@
 using MediaBrowser.Controller.Channels;
-using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Channels;
 using MediaBrowser.Model.Drawing;
 using MediaBrowser.Model.Entities;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaBrowser.Model.MediaInfo;
-using MediaBrowser.Common.Extensions;
 
 using Jellyfin.Plugin.Streamlink;
-using Jellyfin.Plugin.Streamlink.Configuration;
-using MediaBrowser.Providers.Plugin.Streamlink;
 
 namespace MediaBrowser.Channels.Streamlink
 {
@@ -34,7 +27,7 @@ namespace MediaBrowser.Channels.Streamlink
         public Task<ChannelItemResult> GetChannelItems(InternalChannelItemQuery query, CancellationToken cancellationToken)
         {
             return Task.FromResult(new ChannelItemResult {
-                Items = (from c in Plugin.Instance.Configuration.Channels select c.CreateChannelItemInfo()).ToList<ChannelItemInfo>()
+                Items = (from c in Plugin.Instance.Configuration.Channels select c.CreateChannelItemInfo()).ToList()
             });
         }
 
@@ -91,11 +84,9 @@ namespace MediaBrowser.Channels.Streamlink
             return true;
         }
 
-        public ChannelParentalRating ParentalRating
-            => ChannelParentalRating.GeneralAudience;
+        public ChannelParentalRating ParentalRating => ChannelParentalRating.GeneralAudience;
 
-        public string GetCacheKey(string userId)
-            => Guid.NewGuid().ToString("N");
+        public string GetCacheKey(string userId) => Guid.NewGuid().ToString("N");
 
         public string Description => string.Empty;
     }

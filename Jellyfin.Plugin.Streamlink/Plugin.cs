@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using Jellyfin.Plugin.Streamlink.Configuration;
 using MediaBrowser.Common.Configuration;
-using MediaBrowser.Common.Net;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
-using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.Streamlink
 {

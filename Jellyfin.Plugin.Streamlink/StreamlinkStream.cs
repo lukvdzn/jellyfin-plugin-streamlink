@@ -1,13 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Common.Configuration;
-using MediaBrowser.Common.Net;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Configuration;
@@ -16,8 +13,6 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.MediaInfo;
 using Microsoft.Extensions.Logging;
-using Jellyfin.Plugin.Streamlink;
-using Jellyfin.Plugin.Streamlink.Configuration;
 
 using Emby.Server.Implementations.LiveTv.TunerHosts;
 
@@ -62,17 +57,23 @@ namespace Jellyfin.Plugin.Streamlink
 
 
             var streamlinkProc = new Process();
-            streamlinkProc.StartInfo.FileName = Jellyfin.Plugin.Streamlink.Plugin.Instance.Configuration.StreamlinkPath;
+            streamlinkProc.StartInfo.FileName = Plugin.Instance.Configuration.StreamlinkPath;
             streamlinkProc.StartInfo.UseShellExecute = false;
             streamlinkProc.StartInfo.RedirectStandardOutput = true;
             streamlinkProc.StartInfo.ArgumentList.Add("--ffmpeg-ffmpeg=" + encodingConfig.EncoderAppPath);
             streamlinkProc.StartInfo.ArgumentList.Add("--quiet");
             streamlinkProc.StartInfo.ArgumentList.Add("--stdout");
-            foreach (string arg in Jellyfin.Plugin.Streamlink.Plugin.Instance.Configuration.ExtraArguments.Split(" "))
+
+            foreach (string arg in Plugin.Instance.Configuration.ExtraArguments.Split(" "))
+            {
                 if (!string.IsNullOrWhiteSpace(arg))
+                {
                     streamlinkProc.StartInfo.ArgumentList.Add(arg);
+                }
+            }
+
             streamlinkProc.StartInfo.ArgumentList.Add(url);
-            streamlinkProc.StartInfo.ArgumentList.Add(Jellyfin.Plugin.Streamlink.Plugin.Instance.Configuration.StreamQuality);
+            streamlinkProc.StartInfo.ArgumentList.Add(Plugin.Instance.Configuration.StreamQuality);
 
             Logger.LogInformation(
                 "Starting streamlink with: {0} {1}", 
@@ -84,16 +85,15 @@ namespace Jellyfin.Plugin.Streamlink
 
             var taskCompletionSource = new TaskCompletionSource<bool>();
 
-            var now = DateTime.UtcNow;
-
             #pragma warning disable CS4014
             StartStreaming(streamlinkProc, taskCompletionSource, LiveStreamCancellationTokenSource.Token);
 
-            MediaSource.Path = _appHost.GetLoopbackHttpApiUrl() + "/LiveTv/LiveStreamFiles/" + UniqueId + "/stream.ts";
+            MediaSource.Path = _appHost.GetApiUrlForLocalAccess() + "/LiveTv/LiveStreamFiles/" + UniqueId + "/stream.ts";
             MediaSource.Protocol = MediaProtocol.Http;
             MediaSource.LiveStreamId = OriginalStreamId;
 
             await taskCompletionSource.Task.ConfigureAwait(false);
+
             if (taskCompletionSource.Task.Exception != null)
             {
                 // Error happened while opening the stream so raise the exception again to inform the caller
@@ -125,7 +125,6 @@ namespace Jellyfin.Plugin.Streamlink
                             IODefaults.CopyToBufferSize,
                             () => Resolve(openTaskCompletionSource),
                             cancellationToken).ConfigureAwait(false);
-
                     }
                 }
                 catch (OperationCanceledException ex)
@@ -147,7 +146,7 @@ namespace Jellyfin.Plugin.Streamlink
                 openTaskCompletionSource.TrySetResult(false);
 
                 EnableStreamSharing = false;
-                await DeleteTempFiles(new List<string> { TempFilePath }).ConfigureAwait(false);
+                await DeleteTempFiles(TempFilePath).ConfigureAwait(false);
             });
         }
 
